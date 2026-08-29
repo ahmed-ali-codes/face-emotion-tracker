@@ -1,0 +1,8 @@
+opencv-python
+pillow
+mediapipe
+deepface
+face_recognition
+python-dotenv
+requests
+phue
