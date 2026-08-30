@@ -62,14 +62,15 @@ class SmartCameraWindow:
 
         frame = self.camera.get_frame()
         if frame is not None:
+            original_frame = frame.copy()
             # 1. Background Segmentation (Filter)
-            frame = self.background_segmenter.apply_filter(frame)
+            frame = self.background_segmenter.apply_filter(frame, original_frame)
             
             # 2. Gesture Tracking
-            frame = self.gesture_tracker.process_frame(frame)
+            frame = self.gesture_tracker.process_frame(frame, original_frame)
             
             # 3. Face Tracking & Emotion
-            frame = self.face_tracker.process_frame(frame)
+            frame = self.face_tracker.process_frame(frame, original_frame)
 
             # Update UI labels
             self.filter_lbl.configure(text=f"Filter: {app_state.current_filter}")
@@ -89,11 +90,11 @@ class SmartCameraWindow:
             label_ratio = label_width / label_height
             
             if label_ratio > img_ratio:
-                new_height = label_height
-                new_width = int(img_ratio * new_height)
+                new_height = max(1, label_height)
+                new_width = max(1, int(img_ratio * new_height))
             else:
-                new_width = label_width
-                new_height = int(new_width / img_ratio)
+                new_width = max(1, label_width)
+                new_height = max(1, int(new_width / img_ratio))
 
             img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
             imgtk = ImageTk.PhotoImage(img)

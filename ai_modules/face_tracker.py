@@ -13,7 +13,8 @@ class FaceTracker:
         self.known_face_names = []
         self._load_reference_faces()
         
-        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+        cascade_path = os.path.join(os.path.dirname(__file__), "haarcascade_frontalface_default.xml")
+        self.face_cascade = cv2.CascadeClassifier(cascade_path)
         self.frame_count = 0
         self.last_emotion = "Neutral"
         self._emotion_thread = None
@@ -45,11 +46,12 @@ class FaceTracker:
             self.last_emotion = emotion
             app_state.update_emotion(emotion)
         except Exception as e:
-            pass
+            print(f"Emotion analysis error: {e}")
 
-    def process_frame(self, frame):
+    def process_frame(self, frame, original_frame=None):
         self.frame_count += 1
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        detect_frame = original_frame if original_frame is not None else frame
+        gray = cv2.cvtColor(detect_frame, cv2.COLOR_BGR2GRAY)
         
         # Fast face detection using Haar Cascades
         faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(40, 40))
@@ -61,13 +63,13 @@ class FaceTracker:
             # Draw box
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
             
-            face_img = frame[y:y+h, x:x+w]
+            face_img = detect_frame[y:y+h, x:x+w]
             
             name = "Unknown"
             
             if run_heavy_ai:
                 # 1. Face Recognition
-                rgb_frame = cv2.cvtColor(frame, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                rgb_frame = cv2.cvtColor(detect_frame, cv2.COLOR_BGR2RGB)
                 # optimize by using just the face box
                 rgb_face = rgb_frame[y:y+h, x:x+w]
                 face_encodings = face_recognition.face_encodings(rgb_frame, [(y, x+w, y+h, x)])
